@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 export default function Home() {
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>();
   const [artSize, setArtSize] = useState({ width: 15, height: 15 });
+
+  let coordinateX = useRef(-1);
+  let coordinateY = useRef(-1);
+
   const pixelSize = useRef(0);
 
   // Returns the coordinate on the pixel grid (e.g. [1, 1] or [15, 4])
@@ -48,13 +52,27 @@ export default function Home() {
     });
 
     canvas.addEventListener('mousemove', (e) => {
-      const ctx = canvas.getContext('2d');
       const rect = canvas.getBoundingClientRect();
 
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
       const [mousePositionX, mousePositionY] = getCanvasCoordinate(x, y);
+
+      if (mousePositionX !== coordinateX.current || mousePositionY !== coordinateY.current) {
+        if (coordinateY.current % 2 === 1 && coordinateX.current % 2 === 0) {
+          paintPixel(coordinateX.current, coordinateY.current, 'lightGrey');
+        } else if (coordinateY.current % 2 === 0 && coordinateX.current % 2 === 1) {
+          paintPixel(coordinateX.current, coordinateY.current, 'lightGrey');
+        } else {
+          paintPixel(coordinateX.current, coordinateY.current, 'white');
+        }
+
+        coordinateX.current = mousePositionX;
+        coordinateY.current = mousePositionY;
+      }
+
+      paintPixel(mousePositionX, mousePositionY, 'darkgrey');
     });
   };
 
