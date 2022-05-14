@@ -8,6 +8,8 @@ export default function Home() {
   let coordinateX = useRef(-1);
   let coordinateY = useRef(-1);
 
+  const canvasMatrix = useRef([]);
+
   const pixelSize = useRef(0);
 
   // Returns the coordinate on the pixel grid (e.g. [1, 1] or [15, 4])
@@ -48,6 +50,7 @@ export default function Home() {
 
       const [canvasX, canvasY] = getCanvasCoordinate(x, y);
 
+      setPixelColor(canvasX, canvasY, 'black');
       paintPixel(canvasX, canvasY, 'black');
     });
 
@@ -60,34 +63,42 @@ export default function Home() {
       const [mousePositionX, mousePositionY] = getCanvasCoordinate(x, y);
 
       if (mousePositionX !== coordinateX.current || mousePositionY !== coordinateY.current) {
-        if (coordinateY.current % 2 === 1 && coordinateX.current % 2 === 0) {
-          paintPixel(coordinateX.current, coordinateY.current, 'lightGrey');
-        } else if (coordinateY.current % 2 === 0 && coordinateX.current % 2 === 1) {
-          paintPixel(coordinateX.current, coordinateY.current, 'lightGrey');
-        } else {
-          paintPixel(coordinateX.current, coordinateY.current, 'white');
-        }
+        const oldPixelColor = getPixelColor(coordinateX.current, coordinateY.current);
+        paintPixel(coordinateX.current, coordinateY.current, oldPixelColor);
 
         coordinateX.current = mousePositionX;
         coordinateY.current = mousePositionY;
       }
 
-      paintPixel(mousePositionX, mousePositionY, 'darkgrey');
+      paintPixel(mousePositionX, mousePositionY, 'darkGrey');
     });
   };
 
+  const getPixelColor = (x, y) => canvasMatrix.current[x + 1][y + 1];
+  const setPixelColor = (x, y, color) => (canvasMatrix.current[x + 1][y + 1] = color);
+
   const drawGrid = () => {
+    let heightArr = [];
+    let widthArr = [];
+
     for (let h = 1; h <= artSize.height; h++) {
       for (let w = 1; w <= artSize.width; w++) {
         if (h % 2 === 1 && w % 2 === 0) {
           paintPixel(w, h, 'lightGrey');
+          widthArr.push('lightGrey');
         } else if (h % 2 === 0 && w % 2 === 1) {
           paintPixel(w, h, 'lightGrey');
+          widthArr.push('lightGrey');
         } else {
           paintPixel(w, h, 'white');
+          widthArr.push('white');
         }
       }
+      heightArr.push(widthArr);
+      widthArr = [];
     }
+
+    canvasMatrix.current = heightArr;
   };
 
   const getPixelSize = () => {
