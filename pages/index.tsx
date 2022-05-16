@@ -3,15 +3,16 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>();
-  const [artSize, setArtSize] = useState({ width: 10, height: 10 });
+  const [artSize, setArtSize] = useState({ width: 15, height: 15 });
 
   const coordinateX = useRef(-1);
   const coordinateY = useRef(-1);
   const canvasMatrix = useRef([]);
   const pixelSize = useRef(0);
+  const ctx = useRef(null);
 
   // Returns the coordinate on the pixel grid (e.g. [1, 1] or [15, 4])
-  const getCanvasCoordinate = (x, y) => {
+  const getCanvasPixelCoordinate = (x, y) => {
     const canvasX = Math.ceil(x / pixelSize.current);
     const canvasY = Math.ceil(y / pixelSize.current);
 
@@ -19,7 +20,7 @@ export default function Home() {
   };
 
   // Returns the pixel's [0, 0] on the canvas (e.g. [63, 63] or [256, 144])
-  const getPixelCoordinate = (x, y) => {
+  const getCanvasCoordinate = (x, y) => {
     const pixelX = pixelSize.current * x - pixelSize.current;
     const pixelY = pixelSize.current * y - pixelSize.current;
 
@@ -27,17 +28,45 @@ export default function Home() {
   };
 
   // Paints a pixel based on getCanvasCoordinate x and y values
-  const paintPixel = (x, y, color) => {
+  const paintPixel = (x, y, color, saveColor = true) => {
+    if (!x || !y) return;
     const ctx = canvas.getContext('2d');
 
     ctx.fillStyle = color;
 
-    const [fillX, fillY] = getPixelCoordinate(x, y);
+    const [fillX, fillY] = getCanvasCoordinate(x, y);
     ctx.fillRect(fillX, fillY, pixelSize.current, pixelSize.current);
+    if (saveColor) setPixelColor(x, y, color);
+  };
+
+  // Erases a pixel based on getCanvasCoordinate x and y values
+  const erasePixel = (x, y) => {
+    if (!x || !y) return;
+
+    const ctx = canvas.getContext('2d');
+    let color;
+
+    if (x % 2 === 1 && y % 2 === 0) {
+      color = 'lightGrey';
+    } else if (x % 2 === 0 && y % 2 === 1) {
+      color = 'lightGrey';
+    } else {
+      color = 'white';
+    }
+
+    ctx.fillStyle = color;
+
+    const [fillX, fillY] = getCanvasCoordinate(x, y);
+    ctx.fillRect(fillX, fillY, pixelSize.current, pixelSize.current);
+    setPixelColor(x, y, color);
   };
 
   const setupEventListeners = () => {
+    // Disables right-click
+    document.addEventListener('contextmenu', (event) => event.preventDefault());
+
     canvas.addEventListener('mousedown', (e) => {
+      e.preventDefault();
       const ctx = canvas.getContext('2d');
       const rect = canvas.getBoundingClientRect();
 
@@ -46,11 +75,13 @@ export default function Home() {
 
       ctx.fillStyle = 'black';
 
-      const [canvasX, canvasY] = getCanvasCoordinate(x, y);
+      const [canvasX, canvasY] = getCanvasPixelCoordinate(x, y);
 
       setPixelColor(canvasX, canvasY, 'black');
       paintPixel(canvasX, canvasY, 'black');
     });
+
+    document.addEventListener('mousedown', (e) => paintPixel);
 
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -58,25 +89,45 @@ export default function Home() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const [mousePositionX, mousePositionY] = getCanvasCoordinate(x, y);
+      const [mousePositionX, mousePositionY] = getCanvasPixelCoordinate(x, y);
 
-      if (mousePositionX !== coordinateX.current || mousePositionY !== coordinateY.current) {
-        const oldPixelColor = getPixelColor(coordinateX.current, coordinateY.current);
-        paintPixel(coordinateX.current, coordinateY.current, oldPixelColor);
+      // Button is pressed, ignore hover painting
+      if (e.buttons) {
+        if (e.buttons === 1) {
+          paintPixel(mousePositionX, mousePositionY, 'black');
+        }
 
-        coordinateX.current = mousePositionX;
-        coordinateY.current = mousePositionY;
+        if (e.buttons === 2) {
+          erasePixel(mousePositionX, mousePositionY);
+        }
+      } else {
+        if (mousePositionX !== coordinateX.current || mousePositionY !== coordinateY.current) {
+          const oldPixelColor = getPixelColor(coordinateX.current, coordinateY.current);
+          paintPixel(coordinateX.current, coordinateY.current, oldPixelColor, false);
+
+          coordinateX.current = mousePositionX;
+          coordinateY.current = mousePositionY;
+        }
+
+        paintPixel(mousePositionX, mousePositionY, 'darkGrey', false);
       }
-
-      paintPixel(mousePositionX, mousePositionY, 'darkGrey');
     });
+  };
+
+  // Creates an empty bi-dimensional array for the canvas matrix based on the artSize
+  const initializeCanvasMatrix = () => {
+    const matrix = [...Array(artSize.width)].map(() => Array(artSize.height));
+    canvasMatrix.current = matrix;
   };
 
   const getPixelColor = (x, y) => {
     if (x <= 0 || y <= 0) return;
     return canvasMatrix.current[x - 1][y - 1];
   };
-  const setPixelColor = (x, y, color) => (canvasMatrix.current[x - 1][y - 1] = color);
+  const setPixelColor = (x, y, color) => {
+    if (x <= 0 || y <= 0) return;
+    canvasMatrix.current[x - 1][y - 1] = color;
+  };
 
   const drawGrid = () => {
     let heightArr = [];
@@ -112,12 +163,22 @@ export default function Home() {
     return Math.round(Math.min(pixelHeight, pixelWidth));
   };
 
-  const resizeCanvas = (ctx) => {
+  const resizeCanvas = () => {
     const canvasWidth = pixelSize.current * artSize.width;
     const canvasHeight = pixelSize.current * artSize.height;
 
-    ctx.canvas.width = canvasWidth;
-    ctx.canvas.height = canvasHeight;
+    ctx.current.canvas.width = canvasWidth;
+    ctx.current.canvas.height = canvasHeight;
+  };
+
+  const setupCanvas = () => {
+    // Context for the canvas for 2 dimensional operations
+    ctx.current = canvas.getContext('2d');
+
+    setupEventListeners();
+    initializeCanvasMatrix();
+    resizeCanvas();
+    drawGrid();
   };
 
   useEffect(() => {
@@ -125,20 +186,7 @@ export default function Home() {
     pixelSize.current = size;
 
     if (canvas) {
-      setupEventListeners();
-      // Context for the canvas for 2 dimensional operations
-      const ctx = canvas.getContext('2d');
-
-      resizeCanvas(ctx);
-
-      const width = canvas.offsetWidth;
-      const height = canvas.offsetHeight;
-
-      ctx.fillStyle = 'white';
-      ctx.globalAlpha = 1;
-      ctx.fillRect(0, 0, width, height);
-
-      drawGrid();
+      setupCanvas();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvas]);
