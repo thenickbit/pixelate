@@ -87,14 +87,10 @@ export default function Home() {
       const [mousePositionX, mousePositionY] = getCanvasPixelCoordinate(x, y);
 
       // Button is pressed, ignore hover painting
-      if (e.buttons) {
-        if (e.buttons === 1) {
-          paintPixel(mousePositionX, mousePositionY, 'black');
-        }
-
-        if (e.buttons === 2) {
-          erasePixel(mousePositionX, mousePositionY);
-        }
+      if (e.buttons === 1) {
+        paintPixel(mousePositionX, mousePositionY, 'black');
+      } else if (e.buttons === 2) {
+        erasePixel(mousePositionX, mousePositionY);
       } else {
         if (mousePositionX !== coordinateX.current || mousePositionY !== coordinateY.current) {
           const oldPixelColor = getPixelColor(coordinateX.current, coordinateY.current);
