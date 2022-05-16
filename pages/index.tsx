@@ -30,12 +30,11 @@ export default function Home() {
   // Paints a pixel based on getCanvasCoordinate x and y values
   const paintPixel = (x, y, color, saveColor = true) => {
     if (!x || !y) return;
-    const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = color;
+    ctx.current.fillStyle = color;
 
     const [fillX, fillY] = getCanvasCoordinate(x, y);
-    ctx.fillRect(fillX, fillY, pixelSize.current, pixelSize.current);
+    ctx.current.fillRect(fillX, fillY, pixelSize.current, pixelSize.current);
     if (saveColor) setPixelColor(x, y, color);
   };
 
@@ -43,7 +42,6 @@ export default function Home() {
   const erasePixel = (x, y) => {
     if (!x || !y) return;
 
-    const ctx = canvas.getContext('2d');
     let color;
 
     if (x % 2 === 1 && y % 2 === 0) {
@@ -54,10 +52,10 @@ export default function Home() {
       color = 'white';
     }
 
-    ctx.fillStyle = color;
+    ctx.current.fillStyle = color;
 
     const [fillX, fillY] = getCanvasCoordinate(x, y);
-    ctx.fillRect(fillX, fillY, pixelSize.current, pixelSize.current);
+    ctx.current.fillRect(fillX, fillY, pixelSize.current, pixelSize.current);
     setPixelColor(x, y, color);
   };
 
@@ -67,21 +65,18 @@ export default function Home() {
 
     canvas.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      const ctx = canvas.getContext('2d');
       const rect = canvas.getBoundingClientRect();
 
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      ctx.fillStyle = 'black';
+      ctx.current.fillStyle = 'black';
 
       const [canvasX, canvasY] = getCanvasPixelCoordinate(x, y);
 
       setPixelColor(canvasX, canvasY, 'black');
       paintPixel(canvasX, canvasY, 'black');
     });
-
-    document.addEventListener('mousedown', (e) => paintPixel);
 
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
