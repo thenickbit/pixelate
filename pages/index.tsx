@@ -5,11 +5,9 @@ export default function Home() {
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>();
   const [artSize, setArtSize] = useState({ width: 10, height: 10 });
 
-  let coordinateX = useRef(-1);
-  let coordinateY = useRef(-1);
-
+  const coordinateX = useRef(-1);
+  const coordinateY = useRef(-1);
   const canvasMatrix = useRef([]);
-
   const pixelSize = useRef(0);
 
   // Returns the coordinate on the pixel grid (e.g. [1, 1] or [15, 4])
