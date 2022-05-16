@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>();
-  const [artSize, setArtSize] = useState({ width: 15, height: 15 });
+  const [artSize, setArtSize] = useState({ width: 10, height: 10 });
 
   let coordinateX = useRef(-1);
   let coordinateY = useRef(-1);
@@ -74,23 +74,26 @@ export default function Home() {
     });
   };
 
-  const getPixelColor = (x, y) => canvasMatrix.current[x + 1][y + 1];
-  const setPixelColor = (x, y, color) => (canvasMatrix.current[x + 1][y + 1] = color);
+  const getPixelColor = (x, y) => {
+    if (x <= 0 || y <= 0) return;
+    return canvasMatrix.current[x - 1][y - 1];
+  };
+  const setPixelColor = (x, y, color) => (canvasMatrix.current[x - 1][y - 1] = color);
 
   const drawGrid = () => {
     let heightArr = [];
     let widthArr = [];
 
-    for (let h = 1; h <= artSize.height; h++) {
-      for (let w = 1; w <= artSize.width; w++) {
-        if (h % 2 === 1 && w % 2 === 0) {
-          paintPixel(w, h, 'lightGrey');
+    for (let w = 1; w <= artSize.width; w++) {
+      for (let h = 1; h <= artSize.height; h++) {
+        if (w % 2 === 1 && h % 2 === 0) {
+          paintPixel(h, w, 'lightGrey');
           widthArr.push('lightGrey');
-        } else if (h % 2 === 0 && w % 2 === 1) {
-          paintPixel(w, h, 'lightGrey');
+        } else if (w % 2 === 0 && h % 2 === 1) {
+          paintPixel(h, w, 'lightGrey');
           widthArr.push('lightGrey');
         } else {
-          paintPixel(w, h, 'white');
+          paintPixel(h, w, 'white');
           widthArr.push('white');
         }
       }
