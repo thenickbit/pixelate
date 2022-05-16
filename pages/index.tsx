@@ -69,13 +69,13 @@ export default function Home() {
 
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-
-      ctx.current.fillStyle = 'black';
-
       const [canvasX, canvasY] = getCanvasPixelCoordinate(x, y);
 
-      setPixelColor(canvasX, canvasY, 'black');
-      paintPixel(canvasX, canvasY, 'black');
+      if (e.buttons === 1) {
+        paintPixel(canvasX, canvasY, 'black');
+      } else if (e.buttons === 2) {
+        erasePixel(canvasX, canvasY);
+      }
     });
 
     canvas.addEventListener('mousemove', (e) => {
