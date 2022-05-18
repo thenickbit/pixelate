@@ -71,12 +71,12 @@ export default function Home() {
 
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const [canvasX, canvasY] = getCanvasPixelCoordinate(x, y);
+      const [mousePositionX, mousePositionY] = getCanvasPixelCoordinate(x, y);
 
       if (e.buttons === 1) {
-        paintPixel(canvasX, canvasY, color);
+        paintPixel(mousePositionX, mousePositionY, color.current);
       } else if (e.buttons === 2) {
-        erasePixel(canvasX, canvasY);
+        erasePixel(mousePositionX, mousePositionY);
       }
     });
 
@@ -107,7 +107,6 @@ export default function Home() {
     });
 
     window.addEventListener('resize', () => {
-      console.log('resizing');
       setPixelSize();
       resizeCanvas();
       redrawCanvas();
