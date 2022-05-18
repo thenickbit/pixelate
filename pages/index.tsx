@@ -1,10 +1,12 @@
 import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
+import { BlockPicker } from 'react-color';
 
 export default function Home() {
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>();
-  const [artSize, setArtSize] = useState({ width: 15, height: 15 });
+  const [artSize, setArtSize] = useState({ width: 16, height: 16 });
 
+  const color = useRef('#000');
   const coordinateX = useRef(-1);
   const coordinateY = useRef(-1);
   const canvasMatrix = useRef([]);
@@ -72,7 +74,7 @@ export default function Home() {
       const [canvasX, canvasY] = getCanvasPixelCoordinate(x, y);
 
       if (e.buttons === 1) {
-        paintPixel(canvasX, canvasY, 'black');
+        paintPixel(canvasX, canvasY, color);
       } else if (e.buttons === 2) {
         erasePixel(canvasX, canvasY);
       }
@@ -88,7 +90,7 @@ export default function Home() {
 
       // Button is pressed, ignore hover painting
       if (e.buttons === 1) {
-        paintPixel(mousePositionX, mousePositionY, 'black');
+        paintPixel(mousePositionX, mousePositionY, color.current);
       } else if (e.buttons === 2) {
         erasePixel(mousePositionX, mousePositionY);
       } else {
@@ -102,6 +104,13 @@ export default function Home() {
 
         paintPixel(mousePositionX, mousePositionY, 'darkGrey', false);
       }
+    });
+
+    window.addEventListener('resize', () => {
+      console.log('resizing');
+      setPixelSize();
+      resizeCanvas();
+      redrawCanvas();
     });
   };
 
@@ -144,28 +153,38 @@ export default function Home() {
     canvasMatrix.current = heightArr;
   };
 
-  const getPixelSize = () => {
-    const bodyWidth = document.body.clientWidth;
-    const bodyHeight = document.body.clientHeight;
+  const redrawCanvas = () => {
+    for (let w = 1; w <= artSize.width; w++) {
+      for (let h = 1; h <= artSize.height; h++) {
+        paintPixel(h, w, getPixelColor(h, w));
+      }
+    }
+  };
 
-    const pixelWidth = bodyWidth / artSize.width;
-    const pixelHeight = bodyHeight / artSize.height;
+  const setPixelSize = () => {
+    const bodyWidth = canvas.parentElement.clientWidth;
+    const bodyHeight = canvas.parentElement.clientHeight;
 
-    return Math.round(Math.min(pixelHeight, pixelWidth));
+    const pixelWidth = (bodyWidth - 20) / artSize.width;
+    const pixelHeight = (bodyHeight - 20) / artSize.height;
+    pixelSize.current = Math.round(Math.min(pixelHeight, pixelWidth));
   };
 
   const resizeCanvas = () => {
-    const canvasWidth = pixelSize.current * artSize.width;
-    const canvasHeight = pixelSize.current * artSize.height;
+    if (canvas) {
+      const canvasWidth = pixelSize.current * artSize.width;
+      const canvasHeight = pixelSize.current * artSize.height;
 
-    ctx.current.canvas.width = canvasWidth;
-    ctx.current.canvas.height = canvasHeight;
+      ctx.current.canvas.width = canvasWidth;
+      ctx.current.canvas.height = canvasHeight;
+    }
   };
 
   const setupCanvas = () => {
     // Context for the canvas for 2 dimensional operations
     ctx.current = canvas.getContext('2d');
 
+    setPixelSize();
     setupEventListeners();
     initializeCanvasMatrix();
     resizeCanvas();
@@ -173,25 +192,39 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const size = getPixelSize();
-    pixelSize.current = size;
-
     if (canvas) {
       setupCanvas();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvas]);
+  }, [canvas, artSize]);
 
   return (
-    <div className="bg-slate-800 w-screen h-screen flex items-center justify-center overflow-hidden flex-col text-white">
+    <div className="h-screen w-screen">
       <Head>
         <title>Pixelate</title>
         <meta name="description" content="Create multi-layered infinite pixel art" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="p-14 text-white">
-        <canvas ref={(node) => setCanvas(node)} />
+      <main className="text-black flex flex-col md:flex-row justify-between h-full w-full">
+        <div className="bg-slate-700 w-full md:w-40 h-40 md:h-full">
+          {/* <input
+            type="number"
+            value={artSize.width}
+            onChange={(e) => setArtSize({ width: parseInt(e.target.value), height: artSize.height })}
+          />
+          <input
+            type="number"
+            value={artSize.height}
+            onChange={(e) => setArtSize({ width: artSize.width, height: parseInt(e.target.value) })}
+          /> */}
+          <BlockPicker color={color.current} onChange={(e) => (color.current = e.hex)} />
+          {/* <SketchPicker color={color} onChangeComplete={(e) => (color.current = e.hex)} />; */}
+        </div>
+        <div className="flex flex-1 max-w-full max-h-full overflow-hidden items-center justify-center flex-shrink p-5">
+          <canvas ref={(node) => setCanvas(node)} />
+        </div>
+        <div className="bg-slate-700 w-full md:w-40 h-40 md:h-full"></div>
       </main>
     </div>
   );
