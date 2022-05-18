@@ -205,8 +205,8 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="text-black flex flex-col md:flex-row justify-between h-full w-full">
-        <div className="bg-slate-700 w-full md:w-40 h-40 md:h-full">
+      <main className="text-black flex flex-col lg:flex-row justify-between h-full w-full">
+        <div className="bg-slate-700 w-full lg:w-40 h-40 lg:h-full">
           {/* <input
             type="number"
             value={artSize.width}
@@ -223,7 +223,7 @@ export default function Home() {
         <div className="flex flex-1 max-w-full max-h-full overflow-hidden items-center justify-center flex-shrink p-5">
           <canvas ref={(node) => setCanvas(node)} />
         </div>
-        <div className="bg-slate-700 w-full md:w-40 h-40 md:h-full"></div>
+        <div className="bg-slate-700 w-full lg:w-40 h-40 lg:h-full"></div>
       </main>
     </div>
   );
